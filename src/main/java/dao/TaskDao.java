@@ -1,0 +1,222 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package dao;
+import model.Task;
+import util.DBConnect;
+import java.sql.*;
+import java.util.*;
+/**
+ *
+ * @author mai09
+ */
+public class TaskDao {
+    // Tìm kiếm đa điều kiện: theo tên nhân viên, tên dự án, hoặc trạng thái
+    public List<Task> searchTasks(String empName, String projectName, String status) {
+        List<Task> list = new ArrayList<>();
+        
+        StringBuilder sql = new StringBuilder(
+            "SELECT t.id, t.taskName, t.description, t.deadline, t.priority, t.status, " +
+            "       p.projectName, " +
+            "       ISNULL(e.name, N'') AS emp_name " +
+            "FROM Task t " +
+            "INNER JOIN Project p ON t.project_id = p.id " +
+            "LEFT JOIN Assignment a ON t.id = a.task_id " +
+            "LEFT JOIN Employee e ON a.employee_id = e.id " +
+            "WHERE 1=1 "
+        );
+
+        List<Object> params = new ArrayList<>();
+
+        if (empName != null && !empName.trim().isEmpty()) {
+            sql.append("AND e.name LIKE ? ");
+            params.add("%" + empName.trim() + "%");
+        }
+        if (projectName != null && !projectName.trim().isEmpty()) {
+            sql.append("AND p.projectName LIKE ? ");
+            params.add("%" + projectName.trim() + "%");
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            sql.append("AND t.status = ? ");
+            params.add(status.trim());
+        }
+
+        sql.append("ORDER BY t.id DESC");
+
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Task t = new Task();
+                    t.setId(rs.getInt("id"));
+                    t.setTaskName(rs.getNString("taskName"));
+                    t.setDescription(rs.getNString("description"));
+                    t.setDeadline(rs.getDate("deadline"));
+                    t.setPriority(rs.getNString("priority"));
+                    t.setStatus(rs.getNString("status"));
+                    t.setProjectName(rs.getNString("projectName"));
+                    
+                    // Lấy tên nhân viên dạng Unicode an toàn
+                    String emp = rs.getNString("emp_name");
+                    if (emp == null || emp.trim().isEmpty()) {
+                        emp = rs.getString("emp_name");
+                    }
+                    
+                    // Gán đồng thời vào cả hai trường để JSP đọc đường nào cũng có dữ liệu
+                    t.setEmployeeName(emp);
+                    t.setAssignedEmployee(emp);
+
+                    list.add(t);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi tại searchTasks: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // Thống kê: Hoàn thành / Đang làm / Quá hạn (Cú pháp chuẩn SQL Server)
+    public Map<String, Integer> getStatistics() {
+        Map<String, Integer> stats = new HashMap<>();
+        String sql = "SELECT " +
+                     "SUM(CASE WHEN status = N'Hoàn thành' THEN 1 ELSE 0 END) AS completed, " +
+                     "SUM(CASE WHEN status = N'Đang thực hiện' THEN 1 ELSE 0 END) AS inProgress, " +
+                     "SUM(CASE WHEN deadline < CAST(GETDATE() AS DATE) AND status != N'Hoàn thành' THEN 1 ELSE 0 END) AS overdue " +
+                     "FROM Task";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                stats.put("completed", rs.getInt("completed"));
+                stats.put("inProgress", rs.getInt("inProgress"));
+                stats.put("overdue", rs.getInt("overdue"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return stats;
+    }
+
+    public boolean insert(Task task) {
+        String sql = "INSERT INTO Task (taskName, description, deadline, status, priority, project_id) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setNString(1, task.getTaskName());
+            ps.setNString(2, task.getDescription());
+            ps.setDate(3, task.getDeadline());
+            ps.setNString(4, task.getStatus());
+            ps.setNString(5, task.getPriority());
+            ps.setInt(6, task.getProjectId());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public int countByStatus(String status) {
+        int count = 0;
+        String sql = "SELECT COUNT(*) FROM Task WHERE status = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setNString(1, status);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    count = rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return count;
+    }
+
+    // Đếm công việc quá hạn
+    public int countOverdue() {
+        int count = 0;
+        String sql = "SELECT COUNT(*) FROM Task WHERE deadline < CAST(GETDATE() AS DATE) AND status != N'Hoàn thành'";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return count;
+    }
+
+    public List<Task> getAll() {
+        List<Task> list = new ArrayList<>();
+        String sql = "SELECT t.*, p.projectName FROM Task t JOIN Project p ON t.project_id = p.id";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Task t = new Task();
+                t.setId(rs.getInt("id"));
+                t.setTaskName(rs.getNString("taskName"));
+                t.setProjectId(rs.getInt("project_id"));
+                t.setProjectName(rs.getNString("projectName"));
+                t.setDeadline(rs.getDate("deadline"));
+                t.setPriority(rs.getNString("priority"));
+                t.setStatus(rs.getNString("status"));
+                t.setDescription(rs.getNString("description"));
+                list.add(t);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public Task getById(int id) {
+        String sql = "SELECT * FROM Task WHERE id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Task t = new Task();
+                    t.setId(rs.getInt("id"));
+                    t.setTaskName(rs.getNString("taskName"));
+                    t.setProjectId(rs.getInt("project_id"));
+                    t.setDeadline(rs.getDate("deadline"));
+                    t.setPriority(rs.getNString("priority"));
+                    t.setStatus(rs.getNString("status"));
+                    t.setDescription(rs.getNString("description"));
+                    return t;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean update(Task task) {
+        String sql = "UPDATE Task SET taskName = ?, project_id = ?, deadline = ?, priority = ?, status = ?, description = ? WHERE id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setNString(1, task.getTaskName());
+            ps.setInt(2, task.getProjectId());
+            ps.setDate(3, task.getDeadline());
+            ps.setNString(4, task.getPriority());
+            ps.setNString(5, task.getStatus());
+            ps.setNString(6, task.getDescription());
+            ps.setInt(7, task.getId());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+}
