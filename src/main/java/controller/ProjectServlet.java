@@ -1,10 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package controller;
+
 import dao.ProjectDao;
+import dao.TaskDao;
 import model.Project;
+import model.Task;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -12,13 +11,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.Date;
-/**
- *
- * @author mai09
- */
+import java.util.List;
+
 @WebServlet(name = "ProjectServlet", urlPatterns = {"/projects"})
 public class ProjectServlet extends HttpServlet {
     private ProjectDao projectDao = new ProjectDao();
+    private TaskDao taskDao = new TaskDao();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
@@ -29,17 +27,31 @@ public class ProjectServlet extends HttpServlet {
         String action = request.getParameter("action");
         String idParam = request.getParameter("id");
 
-        // 1. Xử lý khi bấm nút Sửa
-        if ("edit".equals(action) && idParam != null) {
+        // 1. Xem công việc thuộc dự án
+        if ("viewTasks".equals(action) && idParam != null) {
             try {
                 int id = Integer.parseInt(idParam);
-                Project project = projectDao.getById(id);
-                request.setAttribute("project", project);
+                Project currentProj = projectDao.getById(id);
+                List<Task> projectTasks = taskDao.getTasksByProjectId(id);
+                
+                request.setAttribute("selectedProject", currentProj);
+                request.setAttribute("projectTasks", projectTasks);
+                request.setAttribute("showTaskModal", true); // Bật cờ để tự động mở Popup
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        // 2. Chức năng Sửa
+        else if ("edit".equals(action) && idParam != null) {
+            try {
+                int id = Integer.parseInt(idParam);
+                Project p = projectDao.getById(id);
+                request.setAttribute("project", p);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } 
-        // 2. Xử lý khi bấm nút Xóa
+        // 3. Chức năng Xóa
         else if ("delete".equals(action) && idParam != null) {
             try {
                 int id = Integer.parseInt(idParam);
@@ -51,7 +63,6 @@ public class ProjectServlet extends HttpServlet {
             return;
         }
 
-        // Tải danh sách dự án lên bảng
         request.setAttribute("projectList", projectDao.getAll());
         request.getRequestDispatcher("/project-list.jsp").forward(request, response);
     }
@@ -74,11 +85,9 @@ public class ProjectServlet extends HttpServlet {
         p.setDescription(description);
 
         if (idStr != null && !idStr.trim().isEmpty()) {
-            // Trường hợp Cập nhật (UPDATE)
             p.setId(Integer.parseInt(idStr));
             projectDao.update(p);
         } else {
-            // Trường hợp Thêm mới (INSERT)
             projectDao.insert(p);
         }
 

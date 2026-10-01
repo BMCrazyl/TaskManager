@@ -219,4 +219,46 @@ public class TaskDao {
             return false;
         }
     }
+    // Xóa công việc theo ID
+    public boolean delete(int id) {
+        String sql = "DELETE FROM Task WHERE id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    // Lấy danh sách công việc kèm người phụ trách theo ID dự án
+    public List<Task> getTasksByProjectId(int projectId) {
+        List<Task> list = new ArrayList<>();
+        String sql = "SELECT t.id, t.taskName, t.deadline, t.priority, t.status, " +
+                     "       ISNULL(e.name, N'Chưa phân công') AS employeeName " +
+                     "FROM Task t " +
+                     "LEFT JOIN Assignment a ON t.id = a.task_id " +
+                     "LEFT JOIN Employee e ON a.employee_id = e.id " +
+                     "WHERE t.project_id = ? " +
+                     "ORDER BY t.id DESC";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, projectId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Task t = new Task();
+                    t.setId(rs.getInt("id"));
+                    t.setTaskName(rs.getNString("taskName"));
+                    t.setDeadline(rs.getDate("deadline"));
+                    t.setPriority(rs.getNString("priority"));
+                    t.setStatus(rs.getNString("status"));
+                    t.setEmployeeName(rs.getNString("employeeName"));
+                    list.add(t);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 }

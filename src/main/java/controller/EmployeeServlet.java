@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package controller;
+
 import dao.EmployeeDao;
 import model.Employee;
 import jakarta.servlet.ServletException;
@@ -11,7 +12,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
+
 /**
  *
  * @author mai09
@@ -27,15 +28,31 @@ public class EmployeeServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
 
         String action = request.getParameter("action");
-        
-        // Nếu bấm nút Sửa: lấy dữ liệu nhân viên đẩy lên form
-        if ("edit".equals(action)) {
-            int id = Integer.parseInt(request.getParameter("id"));
-            Employee emp = employeeDao.getById(id);
-            request.setAttribute("employee", emp);
+        String idParam = request.getParameter("id");
+
+        // 1. No pinidut ti buton a Sukatan (Edit)
+        if ("edit".equals(action) && idParam != null && !idParam.trim().isEmpty()) {
+            try {
+                int id = Integer.parseInt(idParam);
+                Employee emp = employeeDao.getById(id); 
+                request.setAttribute("employee", emp);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } 
+        // 2. No pinidut ti buton a Punasen (Delete)
+        else if ("delete".equals(action) && idParam != null && !idParam.trim().isEmpty()) {
+            try {
+                int id = Integer.parseInt(idParam);
+                employeeDao.delete(id);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            response.sendRedirect(request.getContextPath() + "/employees");
+            return;
         }
 
-        // Luôn load danh sách nhân viên
+        // Kankanayon nga ikabil ti listaan dagiti empleado para iti table
         request.setAttribute("employeeList", employeeDao.getAll());
         request.getRequestDispatcher("/employee-list.jsp").forward(request, response);
     }
@@ -44,6 +61,7 @@ public class EmployeeServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
 
         String idStr = request.getParameter("id");
         String name = request.getParameter("name");
@@ -57,14 +75,19 @@ public class EmployeeServlet extends HttpServlet {
         emp.setPhone(phone);
         emp.setPosition(position);
 
-        if (idStr != null && !idStr.trim().isEmpty()) {
-            // Trường hợp cập nhật (UPDATE)
-            emp.setId(Integer.parseInt(idStr));
-            employeeDao.update(emp);
-        } else {
-            // Trường hợp thêm mới (INSERT)
-            employeeDao.insert(emp);
+        try {
+            if (idStr != null && !idStr.trim().isEmpty()) {
+                // UPDATE no adda dati nga ID
+                emp.setId(Integer.parseInt(idStr));
+                employeeDao.update(emp);
+            } else {
+                // INSERT no baro nga empleado
+                employeeDao.insert(emp);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        response.sendRedirect("employees");
+
+        response.sendRedirect(request.getContextPath() + "/employees");
     }
 }

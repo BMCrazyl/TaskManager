@@ -8,6 +8,14 @@
     <title>Hệ Thống Phân Công Công Việc</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .nav-pills .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .nav-pills .nav-link.active {
+            background-color: #0d6efd !important;
+        }
+    </style>
 </head>
 <body class="bg-light">
 
@@ -27,7 +35,7 @@
 </nav>
 
 <!-- Sidebar hàng dọc trượt từ mép trái ra khi bấm nút 3 gạch -->
-<div class="offcanvas offcanvas-start bg-dark text-white" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel" style="width: 280px;">
+<div class="offcanvas offcanvas-start bg-dark text-white d-flex flex-column" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel" style="width: 280px;">
     <div class="offcanvas-header border-bottom border-secondary py-3">
         <h5 class="offcanvas-title fw-bold text-primary" id="sidebarMenuLabel">
             <i class="bi bi-kanban me-2"></i>Task Manager
@@ -35,31 +43,52 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     
-    <div class="offcanvas-body p-0 pt-3">
+    <div class="offcanvas-body p-0 pt-3 d-flex flex-column">
         <div class="nav flex-column nav-pills px-3 gap-2">
-            <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
+            <a class="nav-link active text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
                href="${pageContext.request.contextPath}/dashboard">
                 <i class="bi bi-speedometer2 fs-5 text-info"></i> Tổng Quan
             </a>
             
-            <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
-               href="${pageContext.request.contextPath}/employees">
-                <i class="bi bi-people fs-5 text-warning"></i> Nhân Viên
-            </a>
-            
-            <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
-               href="${pageContext.request.contextPath}/projects">
-                <i class="bi bi-folder2 fs-5 text-primary"></i> Dự Án
-            </a>
-            
-            <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
-               href="${pageContext.request.contextPath}/tasks">
-                <i class="bi bi-check2-square fs-5 text-success"></i> Công Việc
-            </a>
-            
-            <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
-               href="${pageContext.request.contextPath}/assign">
-                <i class="bi bi-person-check fs-5 text-danger"></i> Phân Công
+            <!-- Chỉ Quản Lý (ADMIN) mới thấy các trang quản lý và phân công -->
+            <c:if test="${sessionScope.user.role == 'ADMIN'}">
+                <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
+                   href="${pageContext.request.contextPath}/employees">
+                    <i class="bi bi-people fs-5 text-warning"></i> Nhân Viên
+                </a>
+                
+                <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
+                   href="${pageContext.request.contextPath}/projects">
+                    <i class="bi bi-folder2 fs-5 text-primary"></i> Dự Án
+                </a>
+                
+                <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
+                   href="${pageContext.request.contextPath}/tasks">
+                    <i class="bi bi-check2-square fs-5 text-success"></i> Công Việc
+                </a>
+                
+                <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
+                   href="${pageContext.request.contextPath}/assign">
+                    <i class="bi bi-person-check fs-5 text-danger"></i> Phân Công
+                </a>
+            </c:if>
+        </div>
+
+        <!-- Khối thông tin tài khoản & nút Đăng Xuất ở đáy Sidebar -->
+        <div class="mt-auto p-3 border-top border-secondary">
+            <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-person-circle fs-3 me-2 text-info"></i>
+                <div class="overflow-hidden">
+                    <div class="fw-bold text-truncate" style="max-width: 170px;">
+                        ${not empty sessionScope.user.fullname ? sessionScope.user.fullname : 'Người Dùng'}
+                    </div>
+                    <span class="badge ${sessionScope.user.role == 'ADMIN' ? 'bg-danger' : 'bg-primary'}">
+                        ${sessionScope.user.role == 'ADMIN' ? 'Quản Lý' : 'Nhân Viên'}
+                    </span>
+                </div>
+            </div>
+            <a href="${pageContext.request.contextPath}/logout" class="btn btn-outline-danger btn-sm w-100 mt-2">
+                <i class="bi bi-box-arrow-right me-1"></i> Đăng Xuất
             </a>
         </div>
     </div>
@@ -78,7 +107,7 @@
         </c:if>
     </c:forEach>
 
-    <!-- Thống kê số lượng theo Yêu cầu 2.2 -->
+    <!-- Thống kê số lượng -->
     <div class="row g-3 mb-4">
         <div class="col-md-4">
             <div class="card shadow-sm border-0 border-start border-success border-4 p-3 bg-white">
@@ -121,16 +150,22 @@
         </div>
     </div>
 
-    <!-- Khối tìm kiếm lọc đa tiêu chí theo Yêu cầu 2.2 -->
+    <!-- Khối tìm kiếm lọc đa tiêu chí -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body p-3">
             <form action="${pageContext.request.contextPath}/dashboard" method="GET" class="row g-2">
-                <div class="col-md-4">
-                    <input type="text" name="empName" class="form-control" placeholder="Tìm theo tên nhân viên..." value="${param.empName}">
-                </div>
-                <div class="col-md-4">
+                <!-- Chỉ Admin mới có ô tìm theo tên nhân viên -->
+                <c:if test="${sessionScope.user.role == 'ADMIN'}">
+                    <div class="col-md-4">
+                        <input type="text" name="empName" class="form-control" placeholder="Tìm theo tên nhân viên..." value="${param.empName}">
+                    </div>
+                </c:if>
+                
+                <!-- Nhân viên thì ô dự án tự động giãn rộng 8 cột -->
+                <div class="${sessionScope.user.role == 'ADMIN' ? 'col-md-4' : 'col-md-8'}">
                     <input type="text" name="projectName" class="form-control" placeholder="Tìm theo tên dự án..." value="${param.projectName}">
                 </div>
+                
                 <div class="col-md-3">
                     <select name="status" class="form-select">
                         <option value="">-- Tất cả --</option>
@@ -149,8 +184,15 @@
     <!-- Danh sách hiển thị -->
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold mb-0 text-dark">Tiến Độ Công Việc</h5>
-            <a href="${pageContext.request.contextPath}/assign" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Phân công mới</a>
+            <h5 class="fw-bold mb-0 text-dark">
+                ${sessionScope.user.role == 'ADMIN' ? 'Tiến Độ Công Việc Toàn Bộ' : 'Công Việc Được Giao Cho Tôi'}
+            </h5>
+            <!-- Chỉ Quản Lý mới thấy nút Phân công mới -->
+            <c:if test="${sessionScope.user.role == 'ADMIN'}">
+                <a href="${pageContext.request.contextPath}/assign" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg me-1"></i>Phân công mới
+                </a>
+            </c:if>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">

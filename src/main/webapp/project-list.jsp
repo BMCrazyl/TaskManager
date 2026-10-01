@@ -7,26 +7,32 @@
     <title>Quản Lý Dự Án</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .nav-pills .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .nav-pills .nav-link.active {
+            background-color: #0d6efd !important;
+        }
+    </style>
 </head>
 <body class="bg-light">
 
-<!-- Thanh Navbar trên cùng với nút 3 gạch -->
+<!-- Navbar có nút 3 gạch -->
 <nav class="navbar navbar-dark bg-dark mb-4 shadow-sm py-2">
     <div class="container-fluid px-3">
-        <!-- Nút 3 gạch mở Menu dọc -->
         <button class="btn btn-outline-light border-0 fs-4 me-2" type="button" 
                 data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
             <i class="bi bi-list"></i>
         </button>
-
         <a class="navbar-brand fw-bold me-auto" href="${pageContext.request.contextPath}/dashboard">
             <i class="bi bi-kanban me-2 text-primary"></i>Task Manager
         </a>
     </div>
 </nav>
 
-<!-- Sidebar hàng dọc trượt từ mép trái ra khi bấm nút 3 gạch -->
-<div class="offcanvas offcanvas-start bg-dark text-white" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel" style="width: 280px;">
+<!-- Sidebar trượt trái -->
+<div class="offcanvas offcanvas-start bg-dark text-white d-flex flex-column" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel" style="width: 280px;">
     <div class="offcanvas-header border-bottom border-secondary py-3">
         <h5 class="offcanvas-title fw-bold text-primary" id="sidebarMenuLabel">
             <i class="bi bi-kanban me-2"></i>Task Manager
@@ -34,31 +40,44 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     
-    <div class="offcanvas-body p-0 pt-3">
+    <div class="offcanvas-body p-0 pt-3 d-flex flex-column">
         <div class="nav flex-column nav-pills px-3 gap-2">
             <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
                href="${pageContext.request.contextPath}/dashboard">
                 <i class="bi bi-speedometer2 fs-5 text-info"></i> Tổng Quan
             </a>
-            
             <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
                href="${pageContext.request.contextPath}/employees">
                 <i class="bi bi-people fs-5 text-warning"></i> Nhân Viên
             </a>
-            
-            <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
+            <a class="nav-link active text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
                href="${pageContext.request.contextPath}/projects">
                 <i class="bi bi-folder2 fs-5 text-primary"></i> Dự Án
             </a>
-            
             <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
                href="${pageContext.request.contextPath}/tasks">
                 <i class="bi bi-check2-square fs-5 text-success"></i> Công Việc
             </a>
-            
             <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6" 
                href="${pageContext.request.contextPath}/assign">
                 <i class="bi bi-person-check fs-5 text-danger"></i> Phân Công
+            </a>
+        </div>
+
+        <div class="mt-auto p-3 border-top border-secondary">
+            <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-person-circle fs-3 me-2 text-info"></i>
+                <div class="overflow-hidden">
+                    <div class="fw-bold text-truncate" style="max-width: 170px;">
+                        ${not empty sessionScope.user.fullname ? sessionScope.user.fullname : 'Quản Lý'}
+                    </div>
+                    <span class="badge ${sessionScope.user.role == 'ADMIN' ? 'bg-danger' : 'bg-primary'}">
+                        ${sessionScope.user.role == 'ADMIN' ? 'Quản Lý' : 'Nhân Viên'}
+                    </span>
+                </div>
+            </div>
+            <a href="${pageContext.request.contextPath}/logout" class="btn btn-outline-danger btn-sm w-100 mt-2">
+                <i class="bi bi-box-arrow-right me-1"></i> Đăng Xuất
             </a>
         </div>
     </div>
@@ -66,7 +85,7 @@
 
 <div class="container pb-5">
     <div class="row g-4">
-        <!-- Khung Form Thêm / Sửa Dự án -->
+        <!-- Form Thêm / Sửa Dự án -->
         <div class="col-lg-4">
             <div class="card shadow-sm border-0">
                 <div class="card-header ${not empty project ? 'bg-warning text-dark' : 'bg-primary text-white'} py-3">
@@ -77,7 +96,6 @@
                 </div>
                 <div class="card-body p-4">
                     <form action="${pageContext.request.contextPath}/projects" method="POST">
-                        <!-- ID ẩn dùng khi sửa -->
                         <input type="hidden" name="id" value="${project.id}">
 
                         <div class="mb-3">
@@ -134,7 +152,12 @@
                             <c:forEach var="p" items="${projectList}">
                                 <tr>
                                     <td><strong>#${p.id}</strong></td>
-                                    <td class="fw-bold text-primary">${p.projectName}</td>
+                                    <td>
+                                        <a href="${pageContext.request.contextPath}/projects?action=viewTasks&id=${p.id}" 
+                                           class="fw-bold text-decoration-none text-primary" title="Bấm để xem công việc">
+                                            ${p.projectName}
+                                        </a>
+                                    </td>
                                     <td>
                                         <small class="d-block text-muted">Bắt đầu: ${p.startDate}</small>
                                         <small class="d-block text-danger">Kết thúc: ${p.endDate}</small>
@@ -142,6 +165,11 @@
                                     <td><small class="text-secondary">${p.description}</small></td>
                                     <td class="text-center">
                                         <div class="d-inline-flex gap-1">
+                                            <!-- Nút Xem Công Việc của Dự Án -->
+                                            <a href="${pageContext.request.contextPath}/projects?action=viewTasks&id=${p.id}" 
+                                               class="btn btn-outline-info btn-sm text-dark" title="Xem danh sách công việc">
+                                                <i class="bi bi-eye"></i> Việc
+                                            </a>
                                             <!-- Nút Sửa -->
                                             <a href="${pageContext.request.contextPath}/projects?action=edit&id=${p.id}" 
                                                class="btn btn-outline-warning btn-sm" title="Sửa thông tin dự án">
@@ -157,11 +185,6 @@
                                     </td>
                                 </tr>
                             </c:forEach>
-                            <c:if test="${empty projectList}">
-                                <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">Chưa có dự án nào.</td>
-                                </tr>
-                            </c:if>
                         </tbody>
                     </table>
                 </div>
@@ -170,6 +193,94 @@
     </div>
 </div>
 
+<!-- Modal hiển thị danh sách công việc và người phụ trách -->
+<div class="modal fade" id="tasksModal" tabindex="-1" aria-labelledby="tasksModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="tasksModalLabel">
+                    <i class="bi bi-folder-check me-2"></i>Dự Án: ${selectedProject.projectName}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#ID</th>
+                                <th>Tên Công Việc</th>
+                                <th>Người Phụ Trách</th>
+                                <th>Hạn Chót</th>
+                                <th>Mức Ưu Tiên</th>
+                                <th>Trạng Thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <c:choose>
+                                <c:when test="${not empty projectTasks}">
+                                    <c:forEach var="task" items="${projectTasks}">
+                                        <tr>
+                                            <td><strong>#${task.id}</strong></td>
+                                            <td class="fw-bold">${task.taskName}</td>
+                                            <td>
+                                                <c:choose>
+                                                    <c:when test="${task.employeeName != 'Chưa phân công'}">
+                                                        <span class="badge bg-info text-dark">
+                                                            <i class="bi bi-person-fill me-1"></i>${task.employeeName}
+                                                        </span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="badge bg-light text-muted border">
+                                                            <i class="bi bi-person me-1"></i>Chưa phân công
+                                                        </span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </td>
+                                            <td>${task.deadline}</td>
+                                            <td>
+                                                <span class="badge ${task.priority == 'Cao' ? 'bg-danger' : (task.priority == 'Trung bình' ? 'bg-warning text-dark' : 'bg-light text-dark border')}">
+                                                    ${task.priority}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge ${task.status == 'Hoàn thành' ? 'bg-success' : (task.status == 'Đang thực hiện' ? 'bg-primary' : 'bg-secondary')}">
+                                                    ${task.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                </c:when>
+                                <c:otherwise>
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">
+                                            Dự án này hiện chưa có công việc nào.
+                                        </td>
+                                    </tr>
+                                </c:otherwise>
+                            </c:choose>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Tự động mở Modal khi có tham số viewTasks -->
+<c:if test="${showTaskModal}">
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var myModal = new bootstrap.Modal(document.getElementById('tasksModal'));
+        myModal.show();
+    });
+</script>
+</c:if>
+
 </body>
 </html>

@@ -11,7 +11,7 @@ import java.sql.SQLException;
  * @author mai09
  */
 public class DBConnect {
-    private static final String URL = "jdbc:sqlserver://PC-35\\SQLEXPRESS01:1433;databaseName=task_management_db;encrypt=true;trustServerCertificate=true;";
+    private static final String URL = "jdbc:sqlserver://PC-32\\SQLEXPRESS:1433;databaseName=task_management_db;encrypt=true;trustServerCertificate=true;";
     private static final String USER = "sa";
     private static final String PASS = "123456"; // Đổi theo mật khẩu MySQL trên máy của bạn
 

@@ -3,26 +3,24 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package controller;
-import dao.EmployeeDao;
-import dao.ProjectDao;
 import dao.TaskDao;
+import model.Account;
 import model.Task;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
 /**
  *
  * @author mai09
  */
-@WebServlet(name = "DashboardServlet", urlPatterns = {"/dashboard", ""})
+@WebServlet(name = "DashboardServlet", urlPatterns = {"/dashboard"})
 public class DashboardServlet extends HttpServlet {
     private TaskDao taskDao = new TaskDao();
-    private EmployeeDao employeeDao = new EmployeeDao();
-    private ProjectDao projectDao = new ProjectDao();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
@@ -30,30 +28,29 @@ public class DashboardServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
-        // 1. Nhận tham số tìm kiếm từ giao diện (nếu có)
+        HttpSession session = request.getSession(false);
+        Account currentUser = (session != null) ? (Account) session.getAttribute("user") : null;
+
+        // Nếu chưa đăng nhập thì chuyển hướng về trang login
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
         String empName = request.getParameter("empName");
         String projectName = request.getParameter("projectName");
         String status = request.getParameter("status");
 
-        // 2. Lấy danh sách công việc theo bộ lọc
+        // PHÂN QUYỀN HIỂN THỊ:
+        // Nếu là EMPLOYEE, ép buộc empName chính là họ tên của nhân viên đang đăng nhập
+        if ("EMPLOYEE".equalsIgnoreCase(currentUser.getRole())) {
+            empName = currentUser.getFullname();
+        }
+
         List<Task> taskList = taskDao.searchTasks(empName, projectName, status);
 
-        // 3. Tính toán các số liệu thống kê
-        int totalEmployees = employeeDao.getAll().size();
-        int totalProjects = projectDao.getAll().size();
-        int completedTasks = taskDao.countByStatus("Hoàn thành");
-        int inProgressTasks = taskDao.countByStatus("Đang thực hiện");
-        int overdueTasks = taskDao.countOverdue();
-
-        // 4. Đẩy toàn bộ dữ liệu sang JSP với đúng tên biến hiển thị
         request.setAttribute("taskList", taskList);
-        request.setAttribute("totalEmployees", totalEmployees);
-        request.setAttribute("totalProjects", totalProjects);
-        request.setAttribute("completedTasks", completedTasks);
-        request.setAttribute("inProgressTasks", inProgressTasks);
-        request.setAttribute("overdueTasks", overdueTasks);
-
-        // Chuyển tiếp tới giao diện dashboard.jsp
+        request.setAttribute("overdueTasks", taskDao.countOverdue());
         request.getRequestDispatcher("/dashboard.jsp").forward(request, response);
     }
 }
