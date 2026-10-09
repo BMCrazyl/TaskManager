@@ -263,6 +263,26 @@ public class TaskDao {
     }
 
 
+    /** Ensures the attendance log exists even when the SQL migration was not run manually. */
+    public boolean ensureAttendanceTableExists() {
+        String sql = "IF OBJECT_ID(N'dbo.AttendanceLog', N'U') IS NULL BEGIN " +
+                     "CREATE TABLE dbo.AttendanceLog (" +
+                     "id INT IDENTITY(1,1) PRIMARY KEY, " +
+                     "task_id INT NOT NULL, employee_id INT NOT NULL, " +
+                     "checked_at DATETIME2(0) NOT NULL CONSTRAINT DF_AttendanceLog_checked_at DEFAULT SYSDATETIME(), " +
+                     "CONSTRAINT UQ_AttendanceLog_task_employee UNIQUE (task_id, employee_id), " +
+                     "CONSTRAINT FK_AttendanceLog_Task FOREIGN KEY (task_id) REFERENCES dbo.Task(id) ON DELETE CASCADE, " +
+                     "CONSTRAINT FK_AttendanceLog_Employee FOREIGN KEY (employee_id) REFERENCES dbo.Employee(id) ON DELETE CASCADE" +
+                     "); END";
+        try (Connection conn = DBConnect.getConnection(); Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+            return true;
+        } catch (Exception e) {
+            System.err.println("Không thể khởi tạo AttendanceLog: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
     /**
      * Lấy các công việc được giao cho nhân viên đăng nhập.
      * Schema hiện tại chưa có khóa ngoại nối Account với Employee,
@@ -270,6 +290,9 @@ public class TaskDao {
      */
     public List<Map<String, Object>> getTasksForEmployee(String employeeName) {
         List<Map<String, Object>> list = new ArrayList<>();
+        if (!ensureAttendanceTableExists()) {
+            return list;
+        }
         String sql = "SELECT t.id, t.taskName, t.description, t.deadline, t.status, " +
                      "t.priority, p.projectName, a.assigned_date, al.checked_at " +
                      "FROM Assignment a " +
@@ -277,7 +300,7 @@ public class TaskDao {
                      "JOIN Task t ON t.id = a.task_id " +
                      "JOIN Project p ON p.id = t.project_id " +
                      "LEFT JOIN AttendanceLog al ON al.task_id = t.id AND al.employee_id = e.id " +
-                     "WHERE e.name = ? " +
+                     "WHERE LTRIM(RTRIM(e.name)) = LTRIM(RTRIM(?)) " +
                      "ORDER BY CASE WHEN t.status = N'Hoàn thành' THEN 1 ELSE 0 END, t.deadline";
         try (Connection conn = DBConnect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -309,11 +332,14 @@ public class TaskDao {
      * Cập nhật trạng thái và lưu nhật ký trong cùng giao dịch.
      */
     public boolean completeTaskFromAttendance(int taskId, String employeeName) {
+        if (!ensureAttendanceTableExists()) {
+            return false;
+        }
         String findSql = "SELECT t.status, e.id AS employee_id " +
                          "FROM Task t WITH (UPDLOCK, ROWLOCK) " +
                          "JOIN Assignment a ON a.task_id = t.id " +
                          "JOIN Employee e ON e.id = a.employee_id " +
-                         "WHERE t.id = ? AND e.name = ?";
+                         "WHERE t.id = ? AND LTRIM(RTRIM(e.name)) = LTRIM(RTRIM(?))";
         String updateSql = "UPDATE Task SET status = N'Hoàn thành' " +
                            "WHERE id = ? AND status <> N'Hoàn thành'";
         String logSql = "INSERT INTO AttendanceLog (task_id, employee_id, checked_at) " +
