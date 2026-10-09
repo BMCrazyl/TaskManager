@@ -19,7 +19,6 @@ BEGIN
   review_status NVARCHAR(30) NOT NULL CONSTRAINT DF_ProjectReport_review_status DEFAULT N'Chờ tiếp nhận',
   received_by NVARCHAR(100) NULL,
   received_at DATETIME2(0) NULL,
-  CONSTRAINT FK_ProjectReport_Project FOREIGN KEY (project_id) REFERENCES dbo.Project(id) ON DELETE CASCADE,
   CONSTRAINT FK_ProjectReport_Task FOREIGN KEY (task_id) REFERENCES dbo.Task(id) ON DELETE CASCADE,
   CONSTRAINT FK_ProjectReport_Employee FOREIGN KEY (employee_id) REFERENCES dbo.Employee(id) ON DELETE CASCADE
  );
