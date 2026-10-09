@@ -70,15 +70,26 @@
                                         <button class="btn btn-sm btn-success" disabled><i class="bi bi-check2-circle me-1"></i>Đã hoàn thành</button>
                                     </c:when>
                                     <c:otherwise>
-                                        <form method="post" action="${pageContext.request.contextPath}/attendance"
+                                        <form method="post" action="${pageContext.request.contextPath}/attendance" class="d-inline"
                                               onsubmit="return confirm('Xác nhận bạn đã hoàn thành công việc này?');">
                                             <input type="hidden" name="taskId" value="${t.id}">
-                                            <button class="btn btn-sm btn-primary" type="submit">
+                                            <button class="btn btn-sm btn-primary mb-1" type="submit">
                                                 <i class="bi bi-calendar2-check me-1"></i>Chấm công hoàn thành
                                             </button>
                                         </form>
                                     </c:otherwise>
                                 </c:choose>
+                                <form method="post" action="${pageContext.request.contextPath}/attendance" enctype="multipart/form-data" class="mt-2 border rounded p-2 bg-light">
+                                    <input type="hidden" name="action" value="uploadReport">
+                                    <input type="hidden" name="taskId" value="${t.id}">
+                                    <label class="form-label small fw-semibold mb-1"><i class="bi bi-paperclip me-1"></i>Gửi file báo cáo</label>
+                                    <input class="form-control form-control-sm mb-2" type="file" name="reportFile"
+                                           accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg,.zip" required>
+                                    <button class="btn btn-sm btn-outline-primary w-100" type="submit">
+                                        <i class="bi bi-cloud-arrow-up me-1"></i>Gửi báo cáo
+                                    </button>
+                                    <small class="text-muted d-block mt-1">Tối đa 10 MB; báo cáo gắn với công việc và dự án.</small>
+                                </form>
                             </td>
                         </tr>
                     </c:forEach>
