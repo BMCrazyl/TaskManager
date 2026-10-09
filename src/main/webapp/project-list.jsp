@@ -298,6 +298,30 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="border-top p-3">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-file-earmark-check me-2 text-primary"></i>Báo cáo công việc của dự án</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light"><tr><th>Tệp báo cáo</th><th>Công việc</th><th>Nhân viên</th><th>Ngày gửi</th><th>Trạng thái</th><th>Tải xuống</th></tr></thead>
+                            <tbody>
+                                <c:forEach var="report" items="${projectReports}">
+                                    <tr>
+                                        <td><i class="bi bi-file-earmark me-1"></i>${report.originalFileName}</td>
+                                        <td>${report.taskName}</td><td>${report.employeeName}</td><td>${report.submittedAt}</td>
+                                        <td><span class="badge ${report.reviewStatus == 'Đã tiếp nhận' ? 'bg-success' : 'bg-warning text-dark'}">${report.reviewStatus}</span>
+                                            <c:if test="${not empty report.receivedBy}"><small class="d-block text-muted">${report.receivedBy} · ${report.receivedAt}</small></c:if>
+                                        </td>
+                                        <td><c:if test="${sessionScope.user.role == 'ADMIN'}"><a class="btn btn-sm btn-outline-primary" href="${pageContext.request.contextPath}/reports?action=download&id=${report.id}"><i class="bi bi-download"></i></a></c:if></td>
+                                    </tr>
+                                </c:forEach>
+                                <c:if test="${empty projectReports}"><tr><td colspan="6" class="text-center text-muted py-3">Dự án này chưa có tệp báo cáo.</td></tr></c:if>
+                            </tbody>
+                        </table>
+                    </div>
+                    <c:if test="${sessionScope.user.role == 'ADMIN'}">
+                        <div class="text-end mt-2"><a class="btn btn-sm btn-primary" href="${pageContext.request.contextPath}/reports"><i class="bi bi-inbox me-1"></i>Mở hộp thư báo cáo</a></div>
+                    </c:if>
+                </div>
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
