@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package controller;
 
 import dao.EmployeeDao;
@@ -13,81 +9,59 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-/**
- *
- * @author mai09
- */
 @WebServlet(name = "EmployeeServlet", urlPatterns = {"/employees"})
 public class EmployeeServlet extends HttpServlet {
-    private EmployeeDao employeeDao = new EmployeeDao();
+    private final EmployeeDao employeeDao = new EmployeeDao();
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
-
         String action = request.getParameter("action");
         String idParam = request.getParameter("id");
+        String keyword = request.getParameter("keyword");
 
-        // 1. No pinidut ti buton a Sukatan (Edit)
         if ("edit".equals(action) && idParam != null && !idParam.trim().isEmpty()) {
-            try {
-                int id = Integer.parseInt(idParam);
-                Employee emp = employeeDao.getById(id); 
-                request.setAttribute("employee", emp);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } 
-        // 2. No pinidut ti buton a Punasen (Delete)
-        else if ("delete".equals(action) && idParam != null && !idParam.trim().isEmpty()) {
-            try {
-                int id = Integer.parseInt(idParam);
-                employeeDao.delete(id);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            try { request.setAttribute("employee", employeeDao.getById(Integer.parseInt(idParam))); }
+            catch (NumberFormatException e) { response.sendError(400, "Mã nhân viên không hợp lệ."); return; }
+        } else if ("delete".equals(action) && idParam != null && !idParam.trim().isEmpty()) {
+            try { employeeDao.delete(Integer.parseInt(idParam)); }
+            catch (NumberFormatException e) { response.sendError(400, "Mã nhân viên không hợp lệ."); return; }
             response.sendRedirect(request.getContextPath() + "/employees");
             return;
         }
-
-        // Kankanayon nga ikabil ti listaan dagiti empleado para iti table
-        request.setAttribute("employeeList", employeeDao.getAll());
+        request.setAttribute("searchKeyword", keyword == null ? "" : keyword);
+        request.setAttribute("employeeList", employeeDao.searchEmployees(keyword));
         request.getRequestDispatcher("/employee-list.jsp").forward(request, response);
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
-
-        String idStr = request.getParameter("id");
-        String name = request.getParameter("name");
-        String email = request.getParameter("email");
-        String phone = request.getParameter("phone");
-        String position = request.getParameter("position");
-
+        String idStr=request.getParameter("id"), name=request.getParameter("name"),
+               email=request.getParameter("email"), phone=request.getParameter("phone"),
+               position=request.getParameter("position");
+        if (name == null || name.trim().isEmpty() || email == null || email.trim().isEmpty()
+                || position == null || position.trim().isEmpty()) {
+            response.sendError(400, "Họ tên, email và chức vụ là các trường bắt buộc."); return;
+        }
         Employee emp = new Employee();
-        emp.setName(name);
-        emp.setEmail(email);
-        emp.setPhone(phone);
-        emp.setPosition(position);
-
+        emp.setName(name.trim()); emp.setEmail(email.trim());
+        emp.setPhone(phone == null ? "" : phone.trim()); emp.setPosition(position.trim());
+        boolean saved;
         try {
             if (idStr != null && !idStr.trim().isEmpty()) {
-                // UPDATE no adda dati nga ID
-                emp.setId(Integer.parseInt(idStr));
-                employeeDao.update(emp);
-            } else {
-                // INSERT no baro nga empleado
-                employeeDao.insert(emp);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+                emp.setId(Integer.parseInt(idStr)); saved=employeeDao.update(emp);
+            } else saved=employeeDao.insert(emp);
+        } catch (NumberFormatException e) { response.sendError(400, "Mã nhân viên không hợp lệ."); return; }
+        if (!saved) {
+            request.setAttribute("formError", "Không lưu được nhân viên. Kiểm tra email có bị trùng hay không.");
+            request.setAttribute("employee", emp);
+            request.setAttribute("employeeList", employeeDao.getAll());
+            request.getRequestDispatcher("/employee-list.jsp").forward(request, response);
+            return;
         }
-
         response.sendRedirect(request.getContextPath() + "/employees");
     }
 }
