@@ -24,24 +24,41 @@ public class ProjectDao {
         }
     }
 
-    public List<Project> getAll() {
+    public List<Project> getAll() { return getAll(null); }
+
+    public List<Project> getAll(String keyword) {
         List<Project> list = new ArrayList<>();
         if (!ensureArchiveSchema()) return list;
-        String sql = "SELECT * FROM Project WHERE ISNULL(isArchived, 0) = 0 ORDER BY id DESC";
-        try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) list.add(readProject(rs));
+        boolean filtered = keyword != null && !keyword.trim().isEmpty();
+        String sql = "SELECT * FROM Project WHERE ISNULL(isArchived, 0) = 0 " +
+            (filtered ? "AND (projectName LIKE ? OR description LIKE ? OR CONVERT(NVARCHAR(30), startDate, 23) LIKE ? OR CONVERT(NVARCHAR(30), endDate, 23) LIKE ?) " : "") +
+            "ORDER BY id DESC";
+        try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (filtered) {
+                String pattern = "%" + keyword.trim() + "%";
+                ps.setNString(1, pattern); ps.setNString(2, pattern);
+                ps.setString(3, pattern); ps.setString(4, pattern);
+            }
+            try (ResultSet rs = ps.executeQuery()) { while (rs.next()) list.add(readProject(rs)); }
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
 
-    public List<Project> getArchived() {
+    public List<Project> getArchived() { return getArchived(null); }
+
+    public List<Project> getArchived(String keyword) {
         List<Project> list = new ArrayList<>();
         if (!ensureArchiveSchema()) return list;
-        String sql = "SELECT * FROM Project WHERE isArchived = 1 ORDER BY archivedAt DESC, id DESC";
-        try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) list.add(readProject(rs));
+        boolean filtered = keyword != null && !keyword.trim().isEmpty();
+        String sql = "SELECT * FROM Project WHERE isArchived = 1 " +
+            (filtered ? "AND (projectName LIKE ? OR description LIKE ?) " : "") +
+            "ORDER BY archivedAt DESC, id DESC";
+        try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (filtered) {
+                String pattern = "%" + keyword.trim() + "%";
+                ps.setNString(1, pattern); ps.setNString(2, pattern);
+            }
+            try (ResultSet rs = ps.executeQuery()) { while (rs.next()) list.add(readProject(rs)); }
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
