@@ -59,14 +59,14 @@
                             </td>
                             <td>${t.projectName}</td>
                             <td>${t.deadline}</td>
-                            <td><span class="badge ${t.priority == 'Cao' ? 'text-bg-danger' : (t.priority == 'Trung bình' ? 'text-bg-warning' : 'text-bg-secondary')}">${t.priority}</span></td>
+                            <td><span class="badge ${(t.priority == 'Cao') ? 'text-bg-danger' : ((t.priority == 'Trung bình' or t.priority == 'Trung binh') ? 'text-bg-warning' : ((t.priority == 'Thấp' or t.priority == 'Thap') ? 'text-bg-success' : 'text-bg-secondary'))}">${t.priority}</span></td>
                             <td>
-                                <span class="badge ${t.status == 'Hoàn thành' ? 'text-bg-success' : (t.status == 'Đang thực hiện' ? 'text-bg-primary' : 'text-bg-secondary')}">${t.status}</span>
+                                <span class="badge ${(t.status == 'Hoàn thành' or t.status == 'Hoan thanh') ? 'text-bg-success' : ((t.status == 'Đang thực hiện' or t.status == 'Dang thuc hien') ? 'text-bg-primary' : 'text-bg-secondary')}">${t.status}</span>
                             </td>
                             <td>${not empty t.checkedAt ? t.checkedAt : 'Chưa chấm công'}</td>
                             <td>
                                 <c:choose>
-                                    <c:when test="${t.status == 'Hoàn thành'}">
+                                    <c:when test="${t.status == 'Hoàn thành' or t.status == 'Hoan thanh'}">
                                         <button class="btn btn-sm btn-success" disabled><i class="bi bi-check2-circle me-1"></i>Đã hoàn thành</button>
                                     </c:when>
                                     <c:otherwise>
