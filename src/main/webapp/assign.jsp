@@ -94,13 +94,19 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Chọn nhân viên phụ trách</label>
-                            <select name="employeeId" class="form-select" required>
-                                <option value="" disabled selected>-- Chọn nhân viên --</option>
+                            <label class="form-label fw-bold">Tìm nhân viên</label>
+                            <input type="search" id="employeeSearch" class="form-control mb-2"
+                                   placeholder="Nhập tên, email hoặc chức vụ để lọc...">
+                            <label class="form-label fw-bold" for="employeeSelect">Chọn nhân viên phụ trách</label>
+                            <select name="employeeId" id="employeeSelect" class="form-select" required>
+                                <option value="" selected>-- Chọn nhân viên --</option>
                                 <c:forEach var="e" items="${employeeList}">
-                                    <option value="${e.id}">${e.name} - ${e.position}</option>
+                                    <option value="${e.id}" data-search="${e.name} ${e.email} ${e.position} ${e.phone}">
+                                        ${e.name} - ${e.position}
+                                    </option>
                                 </c:forEach>
                             </select>
+                            <small class="text-muted">Danh sách tự lấy từ hồ sơ nhân viên hiện có.</small>
                         </div>
 
                         <div class="mb-4">
@@ -124,5 +130,20 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const search = document.getElementById("employeeSearch");
+    const select = document.getElementById("employeeSelect");
+    if (!search || !select) return;
+    const options = Array.from(select.options).slice(1);
+    search.addEventListener("input", function () {
+        const query = search.value.trim().toLocaleLowerCase("vi");
+        options.forEach(function (option) {
+            option.hidden = query !== "" && !(option.dataset.search || option.textContent).toLocaleLowerCase("vi").includes(query);
+        });
+        if (select.selectedOptions.length && select.selectedOptions[0].hidden) select.value = "";
+    });
+});
+</script>
 </body>
 </html>
