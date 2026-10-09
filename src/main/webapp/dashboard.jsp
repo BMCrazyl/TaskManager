@@ -9,6 +9,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
+        .summary-card { cursor: pointer; font: inherit; color: inherit; transition: transform .12s ease, box-shadow .12s ease; }
+        .summary-card:hover { transform: translateY(-2px); box-shadow: 0 .35rem 1rem rgba(0,0,0,.10) !important; }
+        .summary-card:focus-visible { outline: 3px solid #86b7fe; outline-offset: 3px; }
         .nav-pills .nav-link:hover {
             background-color: rgba(255, 255, 255, 0.1);
         }
@@ -102,58 +105,38 @@
 </div>
 
 <div class="container pb-5">
-    <!-- Tính toán thống kê an toàn trực tiếp từ taskList -->
-    <c:set var="completedCount" value="0" />
-    <c:set var="inProgressCount" value="0" />
-    <c:forEach var="item" items="${taskList}">
-        <c:if test="${item.status == 'Hoàn thành'}">
-            <c:set var="completedCount" value="${completedCount + 1}" />
-        </c:if>
-        <c:if test="${item.status == 'Đang thực hiện'}">
-            <c:set var="inProgressCount" value="${inProgressCount + 1}" />
-        </c:if>
-    </c:forEach>
 
-    <!-- Thống kê số lượng -->
+    <!-- Các thẻ thống kê có thể bấm để xem danh sách chi tiết -->
     <div class="row g-3 mb-4">
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 border-start border-success border-4 p-3 bg-white">
+            <button type="button" class="card summary-card shadow-sm border-0 border-start border-success border-4 p-3 bg-white w-100 text-start"
+                    data-bs-toggle="modal" data-bs-target="#completedDetailsModal" aria-label="Xem chi tiết công việc hoàn thành">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted text-uppercase fw-semibold small">Công việc Hoàn thành</span>
-                        <h2 class="fw-bold text-success mb-0">${completedCount}</h2>
-                    </div>
-                    <div class="bg-success-subtle text-success p-3 rounded-circle">
-                        <i class="bi bi-check2-all fs-2"></i>
-                    </div>
+                    <div><span class="text-muted text-uppercase fw-semibold small">Công việc Hoàn thành</span>
+                        <h2 class="fw-bold text-success mb-0">${completedCount}</h2><small class="text-muted">Bấm để xem chi tiết</small></div>
+                    <div class="bg-success-subtle text-success p-3 rounded-circle"><i class="bi bi-check2-all fs-2"></i></div>
                 </div>
-            </div>
+            </button>
         </div>
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 border-start border-primary border-4 p-3 bg-white">
+            <button type="button" class="card summary-card shadow-sm border-0 border-start border-primary border-4 p-3 bg-white w-100 text-start"
+                    data-bs-toggle="modal" data-bs-target="#inProgressDetailsModal" aria-label="Xem chi tiết công việc đang thực hiện">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted text-uppercase fw-semibold small">Đang thực hiện</span>
-                        <h2 class="fw-bold text-primary mb-0">${inProgressCount}</h2>
-                    </div>
-                    <div class="bg-primary-subtle text-primary p-3 rounded-circle">
-                        <i class="bi bi-hourglass-split fs-2"></i>
-                    </div>
+                    <div><span class="text-muted text-uppercase fw-semibold small">Đang thực hiện</span>
+                        <h2 class="fw-bold text-primary mb-0">${inProgressCount}</h2><small class="text-muted">Bấm để xem chi tiết</small></div>
+                    <div class="bg-primary-subtle text-primary p-3 rounded-circle"><i class="bi bi-hourglass-split fs-2"></i></div>
                 </div>
-            </div>
+            </button>
         </div>
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 border-start border-danger border-4 p-3 bg-white">
+            <button type="button" class="card summary-card shadow-sm border-0 border-start border-danger border-4 p-3 bg-white w-100 text-start"
+                    data-bs-toggle="modal" data-bs-target="#overdueDetailsModal" aria-label="Xem chi tiết công việc quá hạn">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted text-uppercase fw-semibold small">Đã quá hạn</span>
-                        <h2 class="fw-bold text-danger mb-0">${overdueTasks != null ? overdueTasks : 0}</h2>
-                    </div>
-                    <div class="bg-danger-subtle text-danger p-3 rounded-circle">
-                        <i class="bi bi-calendar-x fs-2"></i>
-                    </div>
+                    <div><span class="text-muted text-uppercase fw-semibold small">Đã quá hạn</span>
+                        <h2 class="fw-bold text-danger mb-0">${overdueTasks != null ? overdueTasks : 0}</h2><small class="text-muted">Bấm để xem chi tiết</small></div>
+                    <div class="bg-danger-subtle text-danger p-3 rounded-circle"><i class="bi bi-calendar-x fs-2"></i></div>
                 </div>
-            </div>
+            </button>
         </div>
     </div>
 
@@ -264,6 +247,46 @@
             </table>
         </div>
     </div>
+</div>
+
+
+<!-- Chi tiết công việc hoàn thành -->
+<div class="modal fade" id="completedDetailsModal" tabindex="-1" aria-labelledby="completedDetailsModalLabel" aria-hidden="true">
+ <div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
+  <div class="modal-header bg-success-subtle"><div><h5 class="modal-title fw-bold" id="completedDetailsModalLabel">Chi tiết công việc hoàn thành</h5><small class="text-muted">${completedCount} công việc</small></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
+  <div class="modal-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
+   <thead class="table-light"><tr><th>#</th><th>Nhân viên</th><th>Công việc</th><th>Dự án</th><th>Hạn chót</th><th>Trạng thái</th></tr></thead><tbody>
+    <c:forEach var="detail" items="${completedDetails}"><tr><td>#${detail.id}</td><td>${not empty detail.employeeName ? detail.employeeName : 'Chưa phân công'}</td><td><div class="fw-semibold">${detail.taskName}</div><small class="text-muted">${detail.description}</small></td><td>${detail.projectName}</td><td>${detail.deadline}</td><td><span class="badge bg-success">Hoàn thành</span></td></tr></c:forEach>
+    <c:if test="${empty completedDetails}"><tr><td colspan="6" class="text-center text-muted py-4">Chưa có công việc hoàn thành.</td></tr></c:if>
+   </tbody></table></div></div>
+  <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button></div>
+ </div></div>
+</div>
+
+<!-- Chi tiết công việc đang thực hiện -->
+<div class="modal fade" id="inProgressDetailsModal" tabindex="-1" aria-labelledby="inProgressDetailsModalLabel" aria-hidden="true">
+ <div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
+  <div class="modal-header bg-primary-subtle"><div><h5 class="modal-title fw-bold" id="inProgressDetailsModalLabel">Chi tiết công việc đang thực hiện</h5><small class="text-muted">${inProgressCount} công việc</small></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
+  <div class="modal-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
+   <thead class="table-light"><tr><th>#</th><th>Nhân viên</th><th>Công việc</th><th>Dự án</th><th>Hạn chót</th><th>Ưu tiên</th><th>Trạng thái</th></tr></thead><tbody>
+    <c:forEach var="detail" items="${inProgressDetails}"><tr><td>#${detail.id}</td><td>${not empty detail.employeeName ? detail.employeeName : 'Chưa phân công'}</td><td><div class="fw-semibold">${detail.taskName}</div><small class="text-muted">${detail.description}</small></td><td>${detail.projectName}</td><td>${detail.deadline}</td><td><span class="badge ${detail.priority == 'Cao' ? 'bg-danger' : (detail.priority == 'Trung bình' ? 'bg-warning text-dark' : 'bg-secondary')}">${detail.priority}</span></td><td><span class="badge bg-primary">${detail.status}</span></td></tr></c:forEach>
+    <c:if test="${empty inProgressDetails}"><tr><td colspan="7" class="text-center text-muted py-4">Không có công việc đang thực hiện.</td></tr></c:if>
+   </tbody></table></div></div>
+  <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button></div>
+ </div></div>
+</div>
+
+<!-- Chi tiết công việc quá hạn -->
+<div class="modal fade" id="overdueDetailsModal" tabindex="-1" aria-labelledby="overdueDetailsModalLabel" aria-hidden="true">
+ <div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
+  <div class="modal-header bg-danger-subtle"><div><h5 class="modal-title fw-bold" id="overdueDetailsModalLabel">Chi tiết công việc quá hạn</h5><small class="text-muted">${overdueTasks != null ? overdueTasks : 0} công việc</small></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
+  <div class="modal-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
+   <thead class="table-light"><tr><th>#</th><th>Nhân viên</th><th>Công việc</th><th>Dự án</th><th>Hạn chót</th><th>Trạng thái</th></tr></thead><tbody>
+    <c:forEach var="detail" items="${overdueDetails}"><tr><td>#${detail.id}</td><td>${not empty detail.employeeName ? detail.employeeName : 'Chưa phân công'}</td><td><div class="fw-semibold">${detail.taskName}</div><small class="text-muted">${detail.description}</small></td><td>${detail.projectName}</td><td class="text-danger fw-semibold">${detail.deadline}</td><td><span class="badge bg-danger">Quá hạn</span><div><small class="text-muted">Trạng thái: ${detail.status}</small></div></td></tr></c:forEach>
+    <c:if test="${empty overdueDetails}"><tr><td colspan="6" class="text-center text-muted py-4">Không có công việc quá hạn.</td></tr></c:if>
+   </tbody></table></div></div>
+  <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button></div>
+ </div></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
