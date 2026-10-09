@@ -23,6 +23,7 @@ public class TaskServlet extends HttpServlet {
         projectDao.ensureArchiveSchema();
         projectDao.archiveCompletedProjects();
         String action=request.getParameter("action"), idParam=request.getParameter("id");
+        String keyword=request.getParameter("keyword");
         if ("edit".equals(action) && idParam != null) {
             try {
                 Task task=taskDao.getById(Integer.parseInt(idParam));
@@ -30,8 +31,9 @@ public class TaskServlet extends HttpServlet {
                     request.setAttribute("task",task);
             } catch (NumberFormatException e) { response.sendError(400,"Mã công việc không hợp lệ."); return; }
         }
+        request.setAttribute("searchKeyword", keyword == null ? "" : keyword);
         request.setAttribute("projectList",projectDao.getAll());
-        request.setAttribute("taskList",taskDao.getOpenTasks());
+        request.setAttribute("taskList",taskDao.getOpenTasks(keyword));
         request.getRequestDispatcher("/task-list.jsp").forward(request,response);
     }
 
