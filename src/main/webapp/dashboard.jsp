@@ -74,6 +74,11 @@
                    href="${pageContext.request.contextPath}/assign">
                     <i class="bi bi-person-check fs-5 text-danger"></i> Phân Công
                 </a>
+                
+                <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6"
+                   href="${pageContext.request.contextPath}/reports">
+                    <i class="bi bi-file-earmark-check fs-5 text-info"></i> Báo Cáo Nhân Viên
+                </a>
             </c:if>
         </div>
 
