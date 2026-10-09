@@ -155,20 +155,31 @@ public class TaskDao {
     }
 
     /** Open tasks only: completed tasks stay in SQL for audit/history but disappear from active management. */
-    public List<Task> getOpenTasks() {
+    /** Open tasks only; optional search spans task name, project, description and status. */
+    public List<Task> getOpenTasks() { return getOpenTasks(null); }
+
+    public List<Task> getOpenTasks(String keyword) {
         List<Task> list = new ArrayList<>();
+        boolean filtered = keyword != null && !keyword.trim().isEmpty();
         String sql = "SELECT t.*, p.projectName FROM Task t JOIN Project p ON t.project_id = p.id " +
                      "WHERE LTRIM(RTRIM(ISNULL(t.status, N''))) NOT IN (N'Hoàn thành', N'Hoan thanh') " +
-                     "AND ISNULL(p.isArchived, 0) = 0 ORDER BY t.id DESC";
-        try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                Task t = new Task();
-                t.setId(rs.getInt("id")); t.setTaskName(rs.getNString("taskName"));
-                t.setProjectId(rs.getInt("project_id")); t.setProjectName(rs.getNString("projectName"));
-                t.setDeadline(rs.getDate("deadline")); t.setPriority(rs.getNString("priority"));
-                t.setStatus(rs.getNString("status")); t.setDescription(rs.getNString("description"));
-                list.add(t);
+                     "AND ISNULL(p.isArchived, 0) = 0 " +
+                     (filtered ? "AND (t.taskName LIKE ? OR t.description LIKE ? OR p.projectName LIKE ? OR t.status LIKE ? OR t.priority LIKE ?) " : "") +
+                     "ORDER BY t.id DESC";
+        try (Connection conn = DBConnect.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (filtered) {
+                String pattern = "%" + keyword.trim() + "%";
+                for (int i = 1; i <= 5; i++) ps.setNString(i, pattern);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Task t = new Task();
+                    t.setId(rs.getInt("id")); t.setTaskName(rs.getNString("taskName"));
+                    t.setProjectId(rs.getInt("project_id")); t.setProjectName(rs.getNString("projectName"));
+                    t.setDeadline(rs.getDate("deadline")); t.setPriority(rs.getNString("priority"));
+                    t.setStatus(rs.getNString("status")); t.setDescription(rs.getNString("description"));
+                    list.add(t);
+                }
             }
         } catch (Exception e) { System.err.println("Lỗi lấy công việc đang mở: "+e.getMessage()); e.printStackTrace(); }
         return list;
