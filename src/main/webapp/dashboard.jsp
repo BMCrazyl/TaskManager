@@ -200,9 +200,9 @@
                 <tbody>
                     <c:choose>
                         <c:when test="${not empty taskList}">
-                            <c:forEach var="t" items="${taskList}">
+                            <c:forEach var="t" items="${taskList}" varStatus="rowStatus">
                                 <tr>
-                                    <td><strong>#${t.id}</strong></td>
+                                    <td><strong>#${rowStatus.index + 1}</strong></td>
                                     <td>
                                         <div class="fw-bold">${t.taskName}</div>
                                         <small class="text-muted">${t.description}</small>
@@ -225,7 +225,7 @@
                                     </td>
                                     <td>${t.deadline}</td>
                                     <td>
-                                        <span class="badge ${t.priority == 'Cao' ? 'bg-danger' : (t.priority == 'Trung bình' ? 'bg-warning text-dark' : 'bg-light text-dark border')}">
+                                        <span class="badge ${t.priority == 'Cao' ? 'bg-danger' : ((t.priority == 'Trung bình' or t.priority == 'Trung binh') ? 'bg-warning text-dark' : ((t.priority == 'Thấp' or t.priority == 'Thap') ? 'bg-success' : 'bg-secondary'))}">
                                             ${t.priority}
                                         </span>
                                     </td>
@@ -256,7 +256,7 @@
   <div class="modal-header bg-success-subtle"><div><h5 class="modal-title fw-bold" id="completedDetailsModalLabel">Chi tiết công việc hoàn thành</h5><small class="text-muted">${completedCount} công việc</small></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
   <div class="modal-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
    <thead class="table-light"><tr><th>#</th><th>Nhân viên</th><th>Công việc</th><th>Dự án</th><th>Hạn chót</th><th>Trạng thái</th></tr></thead><tbody>
-    <c:forEach var="detail" items="${completedDetails}"><tr><td>#${detail.id}</td><td>${not empty detail.employeeName ? detail.employeeName : 'Chưa phân công'}</td><td><div class="fw-semibold">${detail.taskName}</div><small class="text-muted">${detail.description}</small></td><td>${detail.projectName}</td><td>${detail.deadline}</td><td><span class="badge bg-success">Hoàn thành</span></td></tr></c:forEach>
+    <c:forEach var="detail" items="${completedDetails}" varStatus="completedRow"><tr><td>#${completedRow.index + 1}</td><td>${not empty detail.employeeName ? detail.employeeName : 'Chưa phân công'}</td><td><div class="fw-semibold">${detail.taskName}</div><small class="text-muted">${detail.description}</small></td><td>${detail.projectName}</td><td>${detail.deadline}</td><td><span class="badge bg-success">Hoàn thành</span></td></tr></c:forEach>
     <c:if test="${empty completedDetails}"><tr><td colspan="6" class="text-center text-muted py-4">Chưa có công việc hoàn thành.</td></tr></c:if>
    </tbody></table></div></div>
   <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button></div>
@@ -269,7 +269,7 @@
   <div class="modal-header bg-primary-subtle"><div><h5 class="modal-title fw-bold" id="inProgressDetailsModalLabel">Chi tiết công việc đang thực hiện</h5><small class="text-muted">${inProgressCount} công việc</small></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
   <div class="modal-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
    <thead class="table-light"><tr><th>#</th><th>Nhân viên</th><th>Công việc</th><th>Dự án</th><th>Hạn chót</th><th>Ưu tiên</th><th>Trạng thái</th></tr></thead><tbody>
-    <c:forEach var="detail" items="${inProgressDetails}"><tr><td>#${detail.id}</td><td>${not empty detail.employeeName ? detail.employeeName : 'Chưa phân công'}</td><td><div class="fw-semibold">${detail.taskName}</div><small class="text-muted">${detail.description}</small></td><td>${detail.projectName}</td><td>${detail.deadline}</td><td><span class="badge ${detail.priority == 'Cao' ? 'bg-danger' : (detail.priority == 'Trung bình' ? 'bg-warning text-dark' : 'bg-secondary')}">${detail.priority}</span></td><td><span class="badge bg-primary">${detail.status}</span></td></tr></c:forEach>
+    <c:forEach var="detail" items="${inProgressDetails}" varStatus="progressRow"><tr><td>#${progressRow.index + 1}</td><td>${not empty detail.employeeName ? detail.employeeName : 'Chưa phân công'}</td><td><div class="fw-semibold">${detail.taskName}</div><small class="text-muted">${detail.description}</small></td><td>${detail.projectName}</td><td>${detail.deadline}</td><td><span class="badge ${detail.priority == 'Cao' ? 'bg-danger' : ((detail.priority == 'Trung bình' or detail.priority == 'Trung binh') ? 'bg-warning text-dark' : ((detail.priority == 'Thấp' or detail.priority == 'Thap') ? 'bg-success' : 'bg-secondary'))}">${detail.priority}</span></td><td><span class="badge bg-primary">${detail.status}</span></td></tr></c:forEach>
     <c:if test="${empty inProgressDetails}"><tr><td colspan="7" class="text-center text-muted py-4">Không có công việc đang thực hiện.</td></tr></c:if>
    </tbody></table></div></div>
   <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button></div>
@@ -282,7 +282,7 @@
   <div class="modal-header bg-danger-subtle"><div><h5 class="modal-title fw-bold" id="overdueDetailsModalLabel">Chi tiết công việc quá hạn</h5><small class="text-muted">${overdueTasks != null ? overdueTasks : 0} công việc</small></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
   <div class="modal-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
    <thead class="table-light"><tr><th>#</th><th>Nhân viên</th><th>Công việc</th><th>Dự án</th><th>Hạn chót</th><th>Trạng thái</th></tr></thead><tbody>
-    <c:forEach var="detail" items="${overdueDetails}"><tr><td>#${detail.id}</td><td>${not empty detail.employeeName ? detail.employeeName : 'Chưa phân công'}</td><td><div class="fw-semibold">${detail.taskName}</div><small class="text-muted">${detail.description}</small></td><td>${detail.projectName}</td><td class="text-danger fw-semibold">${detail.deadline}</td><td><span class="badge bg-danger">Quá hạn</span><div><small class="text-muted">Trạng thái: ${detail.status}</small></div></td></tr></c:forEach>
+    <c:forEach var="detail" items="${overdueDetails}" varStatus="overdueRow"><tr><td>#${overdueRow.index + 1}</td><td>${not empty detail.employeeName ? detail.employeeName : 'Chưa phân công'}</td><td><div class="fw-semibold">${detail.taskName}</div><small class="text-muted">${detail.description}</small></td><td>${detail.projectName}</td><td class="text-danger fw-semibold">${detail.deadline}</td><td><span class="badge bg-danger">Quá hạn</span><div><small class="text-muted">Trạng thái: ${detail.status}</small></div></td></tr></c:forEach>
     <c:if test="${empty overdueDetails}"><tr><td colspan="6" class="text-center text-muted py-4">Không có công việc quá hạn.</td></tr></c:if>
    </tbody></table></div></div>
   <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button></div>
