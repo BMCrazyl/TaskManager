@@ -2,6 +2,7 @@ package controller;
 
 import dao.ProjectDao;
 import dao.TaskDao;
+import dao.ProjectReportDao;
 import model.Project;
 import model.Task;
 import jakarta.servlet.ServletException;
@@ -17,6 +18,7 @@ import java.util.List;
 public class ProjectServlet extends HttpServlet {
     private final ProjectDao projectDao = new ProjectDao();
     private final TaskDao taskDao = new TaskDao();
+    private final ProjectReportDao reportDao = new ProjectReportDao();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -35,6 +37,7 @@ public class ProjectServlet extends HttpServlet {
                 request.setAttribute("selectedProject", projectDao.getById(id));
                 List<Task> projectTasks = taskDao.getTasksByProjectId(id);
                 request.setAttribute("projectTasks", projectTasks);
+                request.setAttribute("projectReports", reportDao.getForProject(id));
                 request.setAttribute("showTaskModal", true);
             } catch (NumberFormatException e) {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã dự án không hợp lệ.");
