@@ -2,6 +2,7 @@ package controller;
 
 import dao.ProjectDao;
 import dao.TaskDao;
+import dao.ProjectReportDao;
 import model.Project;
 import model.Task;
 import jakarta.servlet.ServletException;
@@ -15,62 +16,68 @@ import java.util.List;
 
 @WebServlet(name = "ProjectServlet", urlPatterns = {"/projects"})
 public class ProjectServlet extends HttpServlet {
-    private ProjectDao projectDao = new ProjectDao();
-    private TaskDao taskDao = new TaskDao();
+    private final ProjectDao projectDao = new ProjectDao();
+    private final TaskDao taskDao = new TaskDao();
+    private final ProjectReportDao reportDao = new ProjectReportDao();
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
+        projectDao.ensureArchiveSchema();
+        projectDao.archiveCompletedProjects();
 
         String action = request.getParameter("action");
         String idParam = request.getParameter("id");
+        String keyword = request.getParameter("keyword");
 
-        // 1. Xem công việc thuộc dự án
         if ("viewTasks".equals(action) && idParam != null) {
             try {
                 int id = Integer.parseInt(idParam);
-                Project currentProj = projectDao.getById(id);
+                request.setAttribute("selectedProject", projectDao.getById(id));
                 List<Task> projectTasks = taskDao.getTasksByProjectId(id);
-                
-                request.setAttribute("selectedProject", currentProj);
                 request.setAttribute("projectTasks", projectTasks);
-                request.setAttribute("showTaskModal", true); // Bật cờ để tự động mở Popup
-            } catch (Exception e) {
-                e.printStackTrace();
+                request.setAttribute("projectReports", reportDao.getForProject(id));
+                request.setAttribute("showTaskModal", true);
+            } catch (NumberFormatException e) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã dự án không hợp lệ.");
+                return;
             }
-        }
-        // 2. Chức năng Sửa
-        else if ("edit".equals(action) && idParam != null) {
+        } else if ("edit".equals(action) && idParam != null) {
             try {
-                int id = Integer.parseInt(idParam);
-                Project p = projectDao.getById(id);
-                request.setAttribute("project", p);
-            } catch (Exception e) {
-                e.printStackTrace();
+                Project p = projectDao.getById(Integer.parseInt(idParam));
+                if (p != null && !p.isArchived()) request.setAttribute("project", p);
+            } catch (NumberFormatException e) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã dự án không hợp lệ.");
+                return;
             }
-        } 
-        // 3. Chức năng Xóa
-        else if ("delete".equals(action) && idParam != null) {
-            try {
-                int id = Integer.parseInt(idParam);
-                projectDao.delete(id);
-            } catch (Exception e) {
-                e.printStackTrace();
+        } else if ("delete".equals(action) && idParam != null) {
+            try { projectDao.delete(Integer.parseInt(idParam)); }
+            catch (NumberFormatException e) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã dự án không hợp lệ."); return;
+            }
+            response.sendRedirect(request.getContextPath() + "/projects");
+            return;
+        } else if ("deleteHistory".equals(action) && idParam != null) {
+            try { projectDao.deleteArchived(Integer.parseInt(idParam)); }
+            catch (NumberFormatException e) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã dự án không hợp lệ."); return;
             }
             response.sendRedirect(request.getContextPath() + "/projects");
             return;
         }
 
-        request.setAttribute("projectList", projectDao.getAll());
+        request.setAttribute("searchKeyword", keyword == null ? "" : keyword);
+        request.setAttribute("projectList", projectDao.getAll(keyword));
+        request.setAttribute("projectHistory", projectDao.getArchived(keyword));
         request.getRequestDispatcher("/project-list.jsp").forward(request, response);
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
+        projectDao.ensureArchiveSchema();
 
         String idStr = request.getParameter("id");
         String projectName = request.getParameter("projectName");
@@ -87,10 +94,9 @@ public class ProjectServlet extends HttpServlet {
         if (idStr != null && !idStr.trim().isEmpty()) {
             p.setId(Integer.parseInt(idStr));
             projectDao.update(p);
-        } else {
-            projectDao.insert(p);
-        }
+        } else projectDao.insert(p);
 
+        projectDao.archiveCompletedProjects();
         response.sendRedirect(request.getContextPath() + "/projects");
     }
 }

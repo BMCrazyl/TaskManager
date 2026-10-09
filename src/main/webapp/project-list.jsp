@@ -134,8 +134,16 @@
         <div class="col-lg-8">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0 text-dark">Danh Sách Dự Án</h5>
-                    <span class="badge bg-secondary">${projectList.size()} dự án</span>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">Danh Sách Dự Án</h5>
+                        <span class="badge bg-secondary">${projectList.size()} dự án</span>
+                    </div>
+                    <form action="${pageContext.request.contextPath}/projects" method="get" class="d-flex gap-2">
+                        <input type="search" name="keyword" class="form-control form-control-sm" style="min-width:180px"
+                               value="${searchKeyword}" placeholder="Tìm tên, mô tả, ngày...">
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i></button>
+                        <c:if test="${not empty searchKeyword}"><a href="${pageContext.request.contextPath}/projects" class="btn btn-outline-secondary btn-sm">Xóa lọc</a></c:if>
+                    </form>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
@@ -149,9 +157,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <c:forEach var="p" items="${projectList}">
+                            <c:forEach var="p" items="${projectList}" varStatus="projectRow">
                                 <tr>
-                                    <td><strong>#${p.id}</strong></td>
+                                    <td><strong>#${projectRow.index + 1}</strong></td>
                                     <td>
                                         <a href="${pageContext.request.contextPath}/projects?action=viewTasks&id=${p.id}" 
                                            class="fw-bold text-decoration-none text-primary" title="Bấm để xem công việc">
@@ -193,6 +201,34 @@
     </div>
 </div>
 
+<!-- Lịch sử dự án hoàn thành -->
+<div class="container pb-5">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-dark text-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div><h5 class="fw-bold mb-0"><i class="bi bi-archive me-2"></i>Lịch Sử Dự Án Đã Hoàn Thành</h5>
+            <small>Dự án được lưu khi toàn bộ công việc đã hoàn thành.</small></div>
+            <span class="badge bg-secondary">${projectHistory.size()} dự án</span>
+        </div>
+        <div class="table-responsive"><table class="table table-hover align-middle mb-0">
+            <thead class="table-light"><tr><th>#</th><th>Tên dự án</th><th>Thời gian</th><th>Ngày lưu</th><th>Mô tả</th><th>Thao tác</th></tr></thead>
+            <tbody>
+                <c:forEach var="archivedProject" items="${projectHistory}" varStatus="historyRow">
+                    <tr><td>#${historyRow.index + 1}</td><td class="fw-bold">${archivedProject.projectName}</td>
+                    <td><small class="d-block">Bắt đầu: ${archivedProject.startDate}</small><small class="d-block">Kết thúc: ${archivedProject.endDate}</small></td>
+                    <td>${archivedProject.archivedAt}</td><td><small class="text-muted">${archivedProject.description}</small></td>
+                    <td><div class="d-inline-flex gap-1">
+                        <a href="${pageContext.request.contextPath}/projects?action=viewTasks&id=${archivedProject.id}" class="btn btn-outline-info btn-sm"><i class="bi bi-eye"></i> Xem</a>
+                        <a href="${pageContext.request.contextPath}/projects?action=deleteHistory&id=${archivedProject.id}" class="btn btn-outline-danger btn-sm"
+                           onclick="return confirm('Xóa vĩnh viễn dự án này cùng các công việc và lịch sử chấm công liên quan? Không thể hoàn tác.');">
+                           <i class="bi bi-trash"></i> Xóa lịch sử</a>
+                    </div></td></tr>
+                </c:forEach>
+                <c:if test="${empty projectHistory}"><tr><td colspan="6" class="text-center text-muted py-4">Chưa có dự án nào hoàn thành toàn bộ công việc.</td></tr></c:if>
+            </tbody>
+        </table></div>
+    </div>
+</div>
+
 <!-- Modal hiển thị danh sách công việc và người phụ trách -->
 <div class="modal fade" id="tasksModal" tabindex="-1" aria-labelledby="tasksModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -219,9 +255,9 @@
                         <tbody>
                             <c:choose>
                                 <c:when test="${not empty projectTasks}">
-                                    <c:forEach var="task" items="${projectTasks}">
+                                    <c:forEach var="task" items="${projectTasks}" varStatus="projectTaskRow">
                                         <tr>
-                                            <td><strong>#${task.id}</strong></td>
+                                            <td><strong>#${projectTaskRow.index + 1}</strong></td>
                                             <td class="fw-bold">${task.taskName}</td>
                                             <td>
                                                 <c:choose>
@@ -239,12 +275,12 @@
                                             </td>
                                             <td>${task.deadline}</td>
                                             <td>
-                                                <span class="badge ${task.priority == 'Cao' ? 'bg-danger' : (task.priority == 'Trung bình' ? 'bg-warning text-dark' : 'bg-light text-dark border')}">
+                                                <span class="badge ${(task.priority == 'Cao') ? 'bg-danger' : ((task.priority == 'Trung bình' or task.priority == 'Trung binh') ? 'bg-warning text-dark' : ((task.priority == 'Thấp' or task.priority == 'Thap') ? 'bg-success' : 'bg-secondary'))}">
                                                     ${task.priority}
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="badge ${task.status == 'Hoàn thành' ? 'bg-success' : (task.status == 'Đang thực hiện' ? 'bg-primary' : 'bg-secondary')}">
+                                                <span class="badge ${(task.status == 'Hoàn thành' or task.status == 'Hoan thanh') ? 'bg-success' : ((task.status == 'Đang thực hiện' or task.status == 'Dang thuc hien') ? 'bg-primary' : 'bg-secondary')}">
                                                     ${task.status}
                                                 </span>
                                             </td>
@@ -261,6 +297,30 @@
                             </c:choose>
                         </tbody>
                     </table>
+                </div>
+                <div class="border-top p-3">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-file-earmark-check me-2 text-primary"></i>Báo cáo công việc của dự án</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light"><tr><th>Tệp báo cáo</th><th>Công việc</th><th>Nhân viên</th><th>Ngày gửi</th><th>Trạng thái</th><th>Tải xuống</th></tr></thead>
+                            <tbody>
+                                <c:forEach var="report" items="${projectReports}">
+                                    <tr>
+                                        <td><i class="bi bi-file-earmark me-1"></i>${report.originalFileName}</td>
+                                        <td>${report.taskName}</td><td>${report.employeeName}</td><td>${report.submittedAt}</td>
+                                        <td><span class="badge ${report.reviewStatus == 'Đã tiếp nhận' ? 'bg-success' : 'bg-warning text-dark'}">${report.reviewStatus}</span>
+                                            <c:if test="${not empty report.receivedBy}"><small class="d-block text-muted">${report.receivedBy} · ${report.receivedAt}</small></c:if>
+                                        </td>
+                                        <td><c:if test="${sessionScope.user.role == 'ADMIN'}"><a class="btn btn-sm btn-outline-primary" href="${pageContext.request.contextPath}/reports?action=download&id=${report.id}"><i class="bi bi-download"></i></a></c:if></td>
+                                    </tr>
+                                </c:forEach>
+                                <c:if test="${empty projectReports}"><tr><td colspan="6" class="text-center text-muted py-3">Dự án này chưa có tệp báo cáo.</td></tr></c:if>
+                            </tbody>
+                        </table>
+                    </div>
+                    <c:if test="${sessionScope.user.role == 'ADMIN'}">
+                        <div class="text-end mt-2"><a class="btn btn-sm btn-primary" href="${pageContext.request.contextPath}/reports"><i class="bi bi-inbox me-1"></i>Mở hộp thư báo cáo</a></div>
+                    </c:if>
                 </div>
             </div>
             <div class="modal-footer bg-light">
