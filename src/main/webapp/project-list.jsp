@@ -149,9 +149,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <c:forEach var="p" items="${projectList}">
+                            <c:forEach var="p" items="${projectList}" varStatus="projectRow">
                                 <tr>
-                                    <td><strong>#${p.id}</strong></td>
+                                    <td><strong>#${projectRow.index + 1}</strong></td>
                                     <td>
                                         <a href="${pageContext.request.contextPath}/projects?action=viewTasks&id=${p.id}" 
                                            class="fw-bold text-decoration-none text-primary" title="Bấm để xem công việc">
@@ -219,9 +219,9 @@
                         <tbody>
                             <c:choose>
                                 <c:when test="${not empty projectTasks}">
-                                    <c:forEach var="task" items="${projectTasks}">
+                                    <c:forEach var="task" items="${projectTasks}" varStatus="projectTaskRow">
                                         <tr>
-                                            <td><strong>#${task.id}</strong></td>
+                                            <td><strong>#${projectTaskRow.index + 1}</strong></td>
                                             <td class="fw-bold">${task.taskName}</td>
                                             <td>
                                                 <c:choose>
@@ -239,12 +239,12 @@
                                             </td>
                                             <td>${task.deadline}</td>
                                             <td>
-                                                <span class="badge ${task.priority == 'Cao' ? 'bg-danger' : (task.priority == 'Trung bình' ? 'bg-warning text-dark' : 'bg-light text-dark border')}">
+                                                <span class="badge ${(task.priority == 'Cao') ? 'bg-danger' : ((task.priority == 'Trung bình' or task.priority == 'Trung binh') ? 'bg-warning text-dark' : ((task.priority == 'Thấp' or task.priority == 'Thap') ? 'bg-success' : 'bg-secondary'))}">
                                                     ${task.priority}
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="badge ${task.status == 'Hoàn thành' ? 'bg-success' : (task.status == 'Đang thực hiện' ? 'bg-primary' : 'bg-secondary')}">
+                                                <span class="badge ${(task.status == 'Hoàn thành' or task.status == 'Hoan thanh') ? 'bg-success' : ((task.status == 'Đang thực hiện' or task.status == 'Dang thuc hien') ? 'bg-primary' : 'bg-secondary')}">
                                                     ${task.status}
                                                 </span>
                                             </td>
