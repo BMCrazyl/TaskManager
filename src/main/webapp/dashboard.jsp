@@ -74,6 +74,13 @@
             </c:if>
         </div>
 
+            <c:if test="${sessionScope.user.role == 'EMPLOYEE'}">
+                <a class="nav-link text-white py-2 px-3 rounded d-flex align-items-center gap-3 fs-6"
+                   href="${pageContext.request.contextPath}/attendance">
+                    <i class="bi bi-calendar2-check fs-5 text-success"></i> Chấm công công việc
+                </a>
+            </c:if>
+
         <!-- Khối thông tin tài khoản & nút Đăng Xuất ở đáy Sidebar -->
         <div class="mt-auto p-3 border-top border-secondary">
             <div class="d-flex align-items-center mb-2">
