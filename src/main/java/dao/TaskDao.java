@@ -261,4 +261,103 @@ public class TaskDao {
         }
         return list;
     }
+
+
+    /**
+     * Lấy các công việc được giao cho nhân viên đăng nhập.
+     * Schema hiện tại chưa có khóa ngoại nối Account với Employee,
+     * nên đối chiếu fullname của tài khoản với tên nhân viên.
+     */
+    public List<Map<String, Object>> getTasksForEmployee(String employeeName) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT t.id, t.taskName, t.description, t.deadline, t.status, " +
+                     "t.priority, p.projectName, a.assigned_date, al.checked_at " +
+                     "FROM Assignment a " +
+                     "JOIN Employee e ON e.id = a.employee_id " +
+                     "JOIN Task t ON t.id = a.task_id " +
+                     "JOIN Project p ON p.id = t.project_id " +
+                     "LEFT JOIN AttendanceLog al ON al.task_id = t.id AND al.employee_id = e.id " +
+                     "WHERE e.name = ? " +
+                     "ORDER BY CASE WHEN t.status = N'Hoàn thành' THEN 1 ELSE 0 END, t.deadline";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setNString(1, employeeName);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("id", rs.getInt("id"));
+                    row.put("taskName", rs.getNString("taskName"));
+                    row.put("description", rs.getNString("description"));
+                    row.put("deadline", rs.getDate("deadline"));
+                    row.put("status", rs.getNString("status"));
+                    row.put("priority", rs.getNString("priority"));
+                    row.put("projectName", rs.getNString("projectName"));
+                    row.put("assignedDate", rs.getDate("assigned_date"));
+                    row.put("checkedAt", rs.getTimestamp("checked_at"));
+                    list.add(row);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi lấy danh sách chấm công: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /**
+     * Chỉ hoàn thành công việc được giao cho nhân viên hiện tại.
+     * Cập nhật trạng thái và lưu nhật ký trong cùng giao dịch.
+     */
+    public boolean completeTaskFromAttendance(int taskId, String employeeName) {
+        String findSql = "SELECT t.status, e.id AS employee_id " +
+                         "FROM Task t WITH (UPDLOCK, ROWLOCK) " +
+                         "JOIN Assignment a ON a.task_id = t.id " +
+                         "JOIN Employee e ON e.id = a.employee_id " +
+                         "WHERE t.id = ? AND e.name = ?";
+        String updateSql = "UPDATE Task SET status = N'Hoàn thành' " +
+                           "WHERE id = ? AND status <> N'Hoàn thành'";
+        String logSql = "INSERT INTO AttendanceLog (task_id, employee_id, checked_at) " +
+                        "VALUES (?, ?, SYSDATETIME())";
+        try (Connection conn = DBConnect.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                int employeeId;
+                try (PreparedStatement ps = conn.prepareStatement(findSql)) {
+                    ps.setInt(1, taskId);
+                    ps.setNString(2, employeeName);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next() || "Hoàn thành".equals(rs.getNString("status"))) {
+                            conn.rollback();
+                            return false;
+                        }
+                        employeeId = rs.getInt("employee_id");
+                    }
+                }
+                try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
+                    ps.setInt(1, taskId);
+                    if (ps.executeUpdate() != 1) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+                try (PreparedStatement ps = conn.prepareStatement(logSql)) {
+                    ps.setInt(1, taskId);
+                    ps.setInt(2, employeeId);
+                    ps.executeUpdate();
+                }
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi chấm công hoàn thành công việc: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 }
