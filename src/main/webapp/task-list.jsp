@@ -183,7 +183,7 @@
                             </c:forEach>
                             <c:if test="${empty taskList}">
                                 <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">Chưa có công việc nào.</td>
+                                    <td colspan="6" class="text-center py-4 text-muted">Không có công việc đang mở. Công việc hoàn thành được lưu trong lịch sử chấm công/dự án.</td>
                                 </tr>
                             </c:if>
                         </tbody>
