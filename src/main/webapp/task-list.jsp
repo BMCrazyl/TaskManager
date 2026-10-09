@@ -163,12 +163,12 @@
                                     <td><span class="badge bg-secondary">${t.projectName}</span></td>
                                     <td>${t.deadline}</td>
                                     <td>
-                                        <span class="badge ${t.priority == 'Cao' ? 'bg-danger' : (t.priority == 'Trung bình' ? 'bg-warning text-dark' : 'bg-light text-dark border')}">
+                                        <span class="badge ${t.priority == 'Cao' ? 'bg-danger' : ((t.priority == 'Trung bình' or t.priority == 'Trung binh') ? 'bg-warning text-dark' : ((t.priority == 'Thấp' or t.priority == 'Thap') ? 'bg-success' : 'bg-secondary'))}">
                                             ${t.priority}
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="badge ${t.status == 'Hoàn thành' ? 'bg-success' : (t.status == 'Đang thực hiện' ? 'bg-primary' : 'bg-secondary')}">
+                                        <span class="badge ${(t.status == 'Hoàn thành' or t.status == 'Hoan thanh') ? 'bg-success' : ((t.status == 'Đang thực hiện' or t.status == 'Dang thuc hien') ? 'bg-primary' : ((t.status == 'Chưa bắt đầu' or t.status == 'Chua bat dau') ? 'bg-secondary' : 'bg-secondary'))}">
                                             ${t.status}
                                         </span>
                                     </td>
