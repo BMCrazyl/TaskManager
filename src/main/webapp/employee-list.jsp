@@ -102,6 +102,7 @@
                     </h5>
                 </div>
                 <div class="card-body p-4">
+                    <c:if test="${not empty formError}"><div class="alert alert-danger">${formError}</div></c:if>
                     <form action="${pageContext.request.contextPath}/employees" method="POST">
                         <!-- ID ẩn để nhận diện sửa hay thêm mới -->
                         <input type="hidden" name="id" value="${employee.id}">
@@ -120,14 +121,9 @@
                         </div>
                         <div class="mb-4">
                             <label class="form-label fw-bold">Vị trí / Chức vụ</label>
-                            <select name="position" class="form-select" required>
-                                <option value="Backend Developer" ${employee.position == 'Backend Developer' ? 'selected' : ''}>Backend Developer</option>
-                                <option value="Frontend Developer" ${employee.position == 'Frontend Developer' ? 'selected' : ''}>Frontend Developer</option>
-                                <option value="Fullstack Developer" ${employee.position == 'Fullstack Developer' ? 'selected' : ''}>Fullstack Developer</option>
-                                <option value="Project Manager" ${employee.position == 'Project Manager' ? 'selected' : ''}>Project Manager</option>
-                                <option value="Tester" ${employee.position == 'Tester' ? 'selected' : ''}>Tester</option>
-                                <option value="UI/UX Designer" ${employee.position == 'UI/UX Designer' ? 'selected' : ''}>UI/UX Designer</option>
-                            </select>
+                            <input type="text" name="position" class="form-control"
+                                   value="${employee.position}" placeholder="VD: Backend Developer, Kế toán, QA Lead..." required>
+                            <small class="text-muted">Nhập chức vụ tùy ý, không bị giới hạn bởi danh sách có sẵn.</small>
                         </div>
 
                         <div class="d-flex gap-2">
@@ -147,8 +143,18 @@
         <div class="col-lg-8">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0 text-dark">Danh Sách Nhân Viên</h5>
-                    <span class="badge bg-secondary">${employeeList.size()} nhân viên</span>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">Danh Sách Nhân Viên</h5>
+                        <span class="badge bg-secondary">${employeeList.size()} nhân viên</span>
+                    </div>
+                    <form action="${pageContext.request.contextPath}/employees" method="get" class="d-flex gap-2" role="search">
+                        <input type="search" name="keyword" class="form-control form-control-sm" style="min-width:180px"
+                               value="${searchKeyword}" placeholder="Tìm tên, email, chức vụ..." aria-label="Tìm nhân viên">
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i></button>
+                        <c:if test="${not empty searchKeyword}">
+                            <a href="${pageContext.request.contextPath}/employees" class="btn btn-outline-secondary btn-sm">Xóa lọc</a>
+                        </c:if>
+                    </form>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
@@ -191,7 +197,7 @@
                             </c:forEach>
                             <c:if test="${empty employeeList}">
                                 <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">Chưa có nhân sự nào.</td>
+                                    <td colspan="5" class="text-center py-4 text-muted">Không tìm thấy nhân viên phù hợp.</td>
                                 </tr>
                             </c:if>
                         </tbody>
