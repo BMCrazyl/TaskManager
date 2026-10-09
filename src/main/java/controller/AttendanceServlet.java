@@ -1,6 +1,7 @@
 package controller;
 
 import dao.TaskDao;
+import dao.ProjectDao;
 import model.Account;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -15,6 +16,7 @@ import java.util.Map;
 @WebServlet(name = "AttendanceServlet", urlPatterns = {"/attendance"})
 public class AttendanceServlet extends HttpServlet {
     private final TaskDao taskDao = new TaskDao();
+    private final ProjectDao projectDao = new ProjectDao();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -45,6 +47,7 @@ public class AttendanceServlet extends HttpServlet {
         try {
             int taskId = Integer.parseInt(request.getParameter("taskId"));
             boolean success = taskDao.completeTaskFromAttendance(taskId, user.getFullname());
+            if (success) projectDao.archiveCompletedProjects();
             HttpSession session = request.getSession();
             session.setAttribute("attendanceMessage", success
                     ? "Đã chấm công hoàn thành. Bảng quản lý công việc đã được cập nhật."
