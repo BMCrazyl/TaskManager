@@ -27,6 +27,7 @@ public class ProjectServlet extends HttpServlet {
 
         String action = request.getParameter("action");
         String idParam = request.getParameter("id");
+        String keyword = request.getParameter("keyword");
 
         if ("viewTasks".equals(action) && idParam != null) {
             try {
@@ -63,8 +64,9 @@ public class ProjectServlet extends HttpServlet {
             return;
         }
 
-        request.setAttribute("projectList", projectDao.getAll());
-        request.setAttribute("projectHistory", projectDao.getArchived());
+        request.setAttribute("searchKeyword", keyword == null ? "" : keyword);
+        request.setAttribute("projectList", projectDao.getAll(keyword));
+        request.setAttribute("projectHistory", projectDao.getArchived(keyword));
         request.getRequestDispatcher("/project-list.jsp").forward(request, response);
     }
 
