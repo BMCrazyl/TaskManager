@@ -162,9 +162,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <c:forEach var="e" items="${employeeList}">
+                            <c:forEach var="e" items="${employeeList}" varStatus="employeeRow">
                                 <tr>
-                                    <td><strong>#${e.id}</strong></td>
+                                    <td><strong>#${employeeRow.index + 1}</strong></td>
                                     <td class="fw-bold text-primary">${e.name}</td>
                                     <td>
                                         <div><i class="bi bi-envelope me-1 text-muted"></i>${e.email}</div>
