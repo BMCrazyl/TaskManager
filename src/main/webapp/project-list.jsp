@@ -193,6 +193,34 @@
     </div>
 </div>
 
+<!-- Lịch sử dự án hoàn thành -->
+<div class="container pb-5">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-dark text-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div><h5 class="fw-bold mb-0"><i class="bi bi-archive me-2"></i>Lịch Sử Dự Án Đã Hoàn Thành</h5>
+            <small>Dự án được lưu khi toàn bộ công việc đã hoàn thành.</small></div>
+            <span class="badge bg-secondary">${projectHistory.size()} dự án</span>
+        </div>
+        <div class="table-responsive"><table class="table table-hover align-middle mb-0">
+            <thead class="table-light"><tr><th>#</th><th>Tên dự án</th><th>Thời gian</th><th>Ngày lưu</th><th>Mô tả</th><th>Thao tác</th></tr></thead>
+            <tbody>
+                <c:forEach var="archivedProject" items="${projectHistory}" varStatus="historyRow">
+                    <tr><td>#${historyRow.index + 1}</td><td class="fw-bold">${archivedProject.projectName}</td>
+                    <td><small class="d-block">Bắt đầu: ${archivedProject.startDate}</small><small class="d-block">Kết thúc: ${archivedProject.endDate}</small></td>
+                    <td>${archivedProject.archivedAt}</td><td><small class="text-muted">${archivedProject.description}</small></td>
+                    <td><div class="d-inline-flex gap-1">
+                        <a href="${pageContext.request.contextPath}/projects?action=viewTasks&id=${archivedProject.id}" class="btn btn-outline-info btn-sm"><i class="bi bi-eye"></i> Xem</a>
+                        <a href="${pageContext.request.contextPath}/projects?action=deleteHistory&id=${archivedProject.id}" class="btn btn-outline-danger btn-sm"
+                           onclick="return confirm('Xóa vĩnh viễn dự án này cùng các công việc và lịch sử chấm công liên quan? Không thể hoàn tác.');">
+                           <i class="bi bi-trash"></i> Xóa lịch sử</a>
+                    </div></td></tr>
+                </c:forEach>
+                <c:if test="${empty projectHistory}"><tr><td colspan="6" class="text-center text-muted py-4">Chưa có dự án nào hoàn thành toàn bộ công việc.</td></tr></c:if>
+            </tbody>
+        </table></div>
+    </div>
+</div>
+
 <!-- Modal hiển thị danh sách công việc và người phụ trách -->
 <div class="modal fade" id="tasksModal" tabindex="-1" aria-labelledby="tasksModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
