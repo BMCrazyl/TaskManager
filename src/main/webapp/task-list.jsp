@@ -138,8 +138,16 @@
         <div class="col-lg-8">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0 text-dark">Danh Sách Công Việc</h5>
-                    <span class="badge bg-secondary">${taskList.size()} công việc</span>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">Danh Sách Công Việc</h5>
+                        <span class="badge bg-secondary">${taskList.size()} công việc</span>
+                    </div>
+                    <form action="${pageContext.request.contextPath}/tasks" method="get" class="d-flex gap-2">
+                        <input type="search" name="keyword" class="form-control form-control-sm" style="min-width:180px"
+                               value="${searchKeyword}" placeholder="Tìm công việc, dự án, trạng thái...">
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i></button>
+                        <c:if test="${not empty searchKeyword}"><a href="${pageContext.request.contextPath}/tasks" class="btn btn-outline-secondary btn-sm">Xóa lọc</a></c:if>
+                    </form>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
@@ -163,12 +171,12 @@
                                     <td><span class="badge bg-secondary">${t.projectName}</span></td>
                                     <td>${t.deadline}</td>
                                     <td>
-                                        <span class="badge ${t.priority == 'Cao' ? 'bg-danger' : (t.priority == 'Trung bình' ? 'bg-warning text-dark' : 'bg-light text-dark border')}">
+                                        <span class="badge ${t.priority == 'Cao' ? 'bg-danger' : ((t.priority == 'Trung bình' or t.priority == 'Trung binh') ? 'bg-warning text-dark' : ((t.priority == 'Thấp' or t.priority == 'Thap') ? 'bg-success' : 'bg-secondary'))}">
                                             ${t.priority}
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="badge ${t.status == 'Hoàn thành' ? 'bg-success' : (t.status == 'Đang thực hiện' ? 'bg-primary' : 'bg-secondary')}">
+                                        <span class="badge ${(t.status == 'Hoàn thành' or t.status == 'Hoan thanh') ? 'bg-success' : ((t.status == 'Đang thực hiện' or t.status == 'Dang thuc hien') ? 'bg-primary' : ((t.status == 'Chưa bắt đầu' or t.status == 'Chua bat dau') ? 'bg-secondary' : 'bg-secondary'))}">
                                             ${t.status}
                                         </span>
                                     </td>
@@ -183,7 +191,7 @@
                             </c:forEach>
                             <c:if test="${empty taskList}">
                                 <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">Chưa có công việc nào.</td>
+                                    <td colspan="6" class="text-center py-4 text-muted">Không có công việc đang mở. Công việc hoàn thành được lưu trong lịch sử chấm công/dự án.</td>
                                 </tr>
                             </c:if>
                         </tbody>
